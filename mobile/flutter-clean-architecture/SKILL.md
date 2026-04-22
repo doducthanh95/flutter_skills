@@ -16,6 +16,7 @@ tags: [flutter, clean-architecture, bloc, dependency-injection, routing]
 - Dependency Injection với GetIt
 - State management với BLoC/Cubit
 - Code generation với json_serializable và build_runner
+- Luôn tuân thủ rule của repo VPBank/Authen khi module liên quan Core/Resource/Coordinator
 
 ## Khi nào dùng
 - Tạo feature mới trong dự án Flutter modular

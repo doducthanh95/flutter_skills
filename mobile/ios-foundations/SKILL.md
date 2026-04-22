@@ -1,7 +1,7 @@
 ---
 name: ios-foundations
 description: Kiến thức nền tảng iOS gồm Swift, UIKit, và SwiftUI; dùng khi cần tóm tắt nhanh, code mẫu thực chiến, hoặc đối chiếu với codebase iOS của user.
-version: 1.1.0
+version: 1.0.0
 tags: [ios, swift, uikit, swiftui, foundation, cheat-sheet]
 ---
 
@@ -12,7 +12,6 @@ Skill này lưu các kiến thức nền tảng đã học về:
 - Swift language fundamentals
 - UIKit architecture and UI patterns
 - SwiftUI declarative UI and data flow
-- Các pattern thực chiến trong codebase iOS nội bộ: coordinator, networking, storage, event bus, resources
 
 Dùng khi user muốn:
 - cheat sheet
@@ -20,7 +19,6 @@ Dùng khi user muốn:
 - code mẫu ngắn
 - đối chiếu với project iOS hiện tại
 - quyết định nên dùng UIKit hay SwiftUI
-- map kiến trúc SDK/module theo codebase thực tế
 
 ## 1) Swift core knowledge
 
@@ -263,83 +261,3 @@ Trong codebase iOS Account / native module của user, các pattern sau rất qu
 - UIKit: UIView, UIViewController, Auto Layout, lifecycle, main thread
 - SwiftUI: declarative, state-driven, containers, navigation, data flow
 - Hybrid iOS app: chọn framework theo màn hình + mức độ control + kiến trúc hiện tại
-
-## 8) Learned from the current iOS codebase
-
-### Core SDK pattern
-- `CoreSDK` là singleton entrypoint của SDK.
-- `register(isShowLog:partner:)` set partner và init state mặc định như dark mode.
-- `CoreSDK.coordinator(packageName:)` parse package name rồi lấy coordinator từ `CoordinatorController`.
-
-### Coordinator / navigation
-- `CoreCoordinator` khai báo `packageName`, `routers`, `getViewController(...)`.
-- `CoordinatorController` giữ danh sách coordinator và một `UINavigationController` global.
-- Các helper navigation quan trọng:
-  - `pushNamed`
-  - `pushReplacementNamed`
-  - `pop`
-  - `popUntil`
-  - `popToRoot`
-- Khi pop ra khỏi module, SDK có thể bắn `CloseSdkEvent` qua `EventBus`.
-
-### Base UI layer
-- `BaseViewController` hỗ trợ 3 kiểu load:
-  - xib
-  - storyboard
-  - programmatic
-- Base VC có `params`, `packageName`, `setupUI()`, `bindViewModel()`.
-- Dark mode được đọc từ `StorageClient` và có thể ép `.light` nếu module không support.
-- `BaseViewModel` dùng Combine `PassthroughSubject` và các hook lifecycle: ready/active/inactive/release.
-
-### Networking layer
-- `NetworkClient` là URLSession-based client, không phải chỉ wrapper mỏng.
-- Có interceptor chain với các hook:
-  - `adapt`
-  - `process`
-  - `onError`
-  - `shouldRetry`
-  - `didReceive`
-- `TokenInterceptor` tự gắn Bearer token và queue request khi refresh token.
-- `CertificatePinningInterceptor` support pinning theo certificate hoặc public key.
-- Response/error models tách rõ:
-  - `BaseRequestModel`
-  - `BaseResponseModel<T>`
-  - `BaseResultModel`
-  - `BaseErrorModel<E>`
-
-### Storage layer
-- `StorageClient` là facade, gộp 3 backend:
-  - `KeychainStorage`
-  - `UserDefaultsStorage`
-  - `MemoryStorage`
-- `StorageKey` chuẩn hóa key theo token/theme/language/userName/type.
-- Dùng `Keychain` cho dữ liệu nhạy cảm, `UserDefaults` cho config, `Memory` cho state tạm.
-
-### EventBus / deeplink / translate / theme
-- `EventBus` dùng Combine `PassthroughSubject<OneEvent, Never>`.
-- Event tiêu biểu:
-  - `LogoutEvent`
-  - `TokenExpiredEvent`
-  - `DeepLinkEvent`
-  - `ChangeLanguageEvent`
-  - `CloseSdkEvent`
-- `DeepLink` tạo và parse link kiểu `Vpbank://{partner}?domain=...&version=...&destination=...`.
-- `ThemeController` registry theme theo `packageName + type`.
-- `TranslateController` registry translate theo `domain + language` và bắn event khi đổi ngôn ngữ.
-
-### Resources module
-- `resources/Resoures/Resoures` là UI kit + asset kit dùng chung.
-- `ResourceAssets` load image qua bundle nội bộ và expose shortcut `UIImage` helpers.
-- Nhóm quan trọng:
-  - `DesignSystems` cho popup/calendar/message/no-data/retry/skeleton
-  - `Share` cho loading/OTP/common views/events
-  - `Utils` cho money reader/date formatter/dropdown/extensions
-  - `LocalPodLibs/Lottie` là engine animation source nội bộ
-
-### Kinh nghiệm áp dụng vào dự án iOS
-- Nếu sửa màn hình: tìm `BaseViewController` hoặc subclass của nó.
-- Nếu sửa điều hướng: tìm `CoordinatorController` / router dictionary.
-- Nếu sửa API: tìm `NetworkClient` + interceptor + request/response models.
-- Nếu sửa lưu trạng thái: ưu tiên `StorageClient` thay vì gọi thẳng Keychain/UserDefaults.
-- Nếu sửa cross-module communication: dùng `EventBus`.
-- Nếu thêm UI dùng chung: đặt vào `resources` để reuse theo asset/component.
